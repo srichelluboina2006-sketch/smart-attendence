@@ -224,7 +224,13 @@ public class SimpleServer {
             return;
         }
 
-        if (!PasswordUtil.verifyPassword(password, user.getString("password"))) {
+        // Support both "password" and "passwordHash" field names
+        String storedHash = user.getString("password");
+        if (storedHash == null) {
+            storedHash = user.getString("passwordHash");
+        }
+        
+        if (storedHash == null || !PasswordUtil.verifyPassword(password, storedHash)) {
             sendError(exchange, 401, "Invalid password");
             return;
         }
