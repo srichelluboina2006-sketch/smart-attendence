@@ -4,7 +4,7 @@ const { MongoClient } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 
-const CONNECTION_STRING = 'mongodb://localhost:27017';
+const CONNECTION_STRING = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const DATABASE_NAME = 'smart_attendance';
 
 async function initializeDatabase() {

@@ -31,3 +31,5 @@ npm-debug.log*
 # Database
 *.db
 *.sqlite
+database/node_modules/
+database/package-lock.json
