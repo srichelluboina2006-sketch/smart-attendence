@@ -32,6 +32,7 @@ apiClient.interceptors.response.use(
 export const authAPI = {
   login: (username, password) => apiClient.post('/auth/login', { username, password }),
   register: (data) => apiClient.post('/auth/register', data),
+  checkUsers: () => apiClient.get('/auth/check-users'),
 };
 
 export const adminAPI = {

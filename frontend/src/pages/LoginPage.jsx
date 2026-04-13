@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { authAPI } from '../api/apiClient'
 
 const LoginPage = ({ setUser }) => {
@@ -96,9 +96,10 @@ const LoginPage = ({ setUser }) => {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
-          <p>Demo Credentials:</p>
-          <p className="font-mono text-xs mt-2 text-gray-400 bg-gray-800/50 inline-block px-3 py-1 rounded-lg">
-            admin / admin123
+          <p>Don't have an account?{' '}
+            <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+              Sign up here
+            </Link>
           </p>
         </div>
       </div>

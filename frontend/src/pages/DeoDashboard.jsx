@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { deoAPI } from '../api/apiClient'
 import { LogOut, Users, FileText, BarChart3, Calendar } from 'lucide-react'
 
-export default function DeoDashboard({ user }) {
+export default function DeoDashboard({ user, onLogout }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [students, setStudents] = useState([])
@@ -134,8 +134,7 @@ export default function DeoDashboard({ user }) {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    if (onLogout) onLogout()
     navigate('/login')
   }
 

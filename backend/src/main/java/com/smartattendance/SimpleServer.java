@@ -70,7 +70,7 @@ public class SimpleServer {
         System.out.println("QR codes will use: http://" + LOCAL_IP + ":8080/attend/...");
         System.out.println("Database: " + MongoDBConnection.getDatabase().getName());
         System.out.println("Endpoints:");
-        System.out.println("  POST /auth/login");
+        System.out.println("  POST /auth/login  POST /auth/register  GET /auth/check-users");
         System.out.println("  GET|POST /users         GET|POST /departments");
         System.out.println("  GET|POST /subjects      GET|POST /students");
         System.out.println("  GET|POST /notifications GET /dashboard");
@@ -100,6 +100,10 @@ public class SimpleServer {
                 // Auth
                 if ("/auth/login".equals(path) && "POST".equals(method)) {
                     handleLogin(exchange);
+                } else if ("/auth/register".equals(path) && "POST".equals(method)) {
+                    handleRegister(exchange);
+                } else if ("/auth/check-users".equals(path) && "GET".equals(method)) {
+                    handleCheckUsers(exchange);
                 }
                 // Users
                 else if ("/users".equals(path) && "GET".equals(method)) {
@@ -249,6 +253,94 @@ public class SimpleServer {
         res.addProperty("email", user.getString("email"));
         res.addProperty("role", user.getString("role"));
         res.addProperty("token", token);
+        sendJson(exchange, 200, res);
+    }
+
+    private static void handleRegister(HttpExchange exchange) throws Exception {
+        String body = readBody(exchange);
+        JsonObject req = gson.fromJson(body, JsonObject.class);
+
+        if (!req.has("name") || !req.has("username") || !req.has("password") || !req.has("role")) {
+            sendError(exchange, 400, "Name, username, password and role are required");
+            return;
+        }
+
+        String name = req.get("name").getAsString().trim();
+        String username = req.get("username").getAsString().trim();
+        String password = req.get("password").getAsString();
+        String email = req.has("email") && !req.get("email").isJsonNull() ? req.get("email").getAsString().trim() : "";
+        String role = req.get("role").getAsString().trim();
+
+        if (name.isEmpty() || username.isEmpty() || password.isEmpty()) {
+            sendError(exchange, 400, "Name, username and password cannot be empty");
+            return;
+        }
+
+        if (password.length() < 4) {
+            sendError(exchange, 400, "Password must be at least 4 characters");
+            return;
+        }
+
+        if (!role.equals("admin") && !role.equals("faculty") && !role.equals("deo")) {
+            sendError(exchange, 400, "Role must be admin, faculty or deo");
+            return;
+        }
+
+        MongoDatabase db = MongoDBConnection.getDatabase();
+        MongoCollection<Document> users = db.getCollection("users");
+
+        Document existingUsername = users.find(new Document("username", username)).first();
+        if (existingUsername != null) {
+            sendError(exchange, 409, "Username '" + username + "' already exists. Please choose a different username.");
+            return;
+        }
+
+        if (!email.isEmpty()) {
+            Document existingEmail = users.find(new Document("email", email)).first();
+            if (existingEmail != null) {
+                sendError(exchange, 409, "Email '" + email + "' is already registered.");
+                return;
+            }
+        }
+
+        Document user = new Document()
+            .append("name", name)
+            .append("username", username)
+            .append("password", PasswordUtil.hashPassword(password))
+            .append("email", email)
+            .append("role", role)
+            .append("isActive", true)
+            .append("createdAt", new Date())
+            .append("updatedAt", new Date());
+
+        users.insertOne(user);
+        System.out.println("  User registered: " + username + " (" + role + ")");
+
+        String token = JwtUtil.generateToken(
+            user.getObjectId("_id").hashCode(),
+            username,
+            role
+        );
+
+        JsonObject res = new JsonObject();
+        res.addProperty("success", true);
+        res.addProperty("message", "Registration successful");
+        res.addProperty("userId", user.getObjectId("_id").toHexString());
+        res.addProperty("username", username);
+        res.addProperty("name", name);
+        res.addProperty("email", email);
+        res.addProperty("role", role);
+        res.addProperty("token", token);
+        sendJson(exchange, 200, res);
+    }
+
+    private static void handleCheckUsers(HttpExchange exchange) throws Exception {
+        MongoDatabase db = MongoDBConnection.getDatabase();
+        long count = db.getCollection("users").countDocuments();
+        JsonObject res = new JsonObject();
+        res.addProperty("success", true);
+        res.addProperty("hasUsers", count > 0);
+        res.addProperty("count", count);
         sendJson(exchange, 200, res);
     }
 

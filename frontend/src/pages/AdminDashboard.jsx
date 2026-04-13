@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { adminAPI } from '../api/apiClient'
 import { LogOut, Users, Building2, BookOpen, BarChart3, Bell, GraduationCap, Trash2, Plus, RefreshCw, X } from 'lucide-react'
 
-export default function AdminDashboard({ user }) {
+export default function AdminDashboard({ user, onLogout }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [stats, setStats] = useState({ totalUsers: 0, totalStudents: 0, totalDepartments: 0, totalSubjects: 0, totalNotifications: 0, recentUsers: [] })
@@ -99,6 +99,11 @@ export default function AdminDashboard({ user }) {
       else if (type === 'subject') res = await adminAPI.deleteSubject(id)
       else if (type === 'student') res = await adminAPI.deleteStudent(id)
       showMsg(res.data.message || 'Deleted successfully!')
+      if (type === 'user' && id === user?.id) {
+        if (onLogout) onLogout()
+        navigate('/login')
+        return
+      }
       loadTabData(activeTab)
     } catch (err) {
       showMsg(err.response?.data?.message || 'Delete failed', 'error')
@@ -106,8 +111,7 @@ export default function AdminDashboard({ user }) {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    if (onLogout) onLogout()
     navigate('/login')
   }
 

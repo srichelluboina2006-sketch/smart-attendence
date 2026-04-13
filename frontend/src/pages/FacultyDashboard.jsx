@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { attendanceAPI } from '../api/apiClient'
 import { LogOut, QrCode, LayoutDashboard, ClipboardList, Users, RefreshCw, X, Eye, Clock, CheckCircle2, AlertCircle, BookOpen, Plus, Trash2 } from 'lucide-react'
 
-export default function FacultyDashboard({ user }) {
+export default function FacultyDashboard({ user, onLogout }) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [allSubjects, setAllSubjects] = useState([])
@@ -145,8 +145,7 @@ export default function FacultyDashboard({ user }) {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    if (onLogout) onLogout()
     navigate('/login')
   }
 
